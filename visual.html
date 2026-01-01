@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Convolution Sliding Visualization</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">SignalsLab<span>.Convolution</span></div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="discrete.html">Discrete Convolution</a>
+      <a href="visual.html" class="active">Sliding Visualization</a>
+    </nav>
+    <button class="burger" id="burger">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <main class="main">
+    <section class="hero">
+      <h1>Sliding & Overlap Visualization</h1>
+      <p>
+        See how convolution works as “flip, shift, multiply and sum”. Use the slider to move h[−k]
+        across x[k] and watch which samples overlap.[web:228][web:229]
+      </p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Sequences & slider</h2>
+        <p class="small">
+          Use same format as before. Example:<br />
+          x[k]: 0:1, 1:1, 2:1<br />
+          h[k]: 0:1, 1:1
+        </p>
+        <label> x[k]
+          <textarea id="xInput" rows="3">0:1, 1:1, 2:1</textarea>
+        </label>
+        <label> h[k]
+          <textarea id="hInput" rows="3">0:1, 1:1</textarea>
+        </label>
+        <button id="loadBtn">Load sequences</button>
+
+        <div class="m-top">
+          <label> n (shift index)
+            <input type="range" id="nSlider" min="0" max="0" value="0" />
+          </label>
+          <p class="small">Current n = <span id="nValue">0</span></p>
+          <button id="playBtn" class="btn secondary small">Play animation</button>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Visualization</h2>
+        <div id="visBox" class="output-box"></div>
+
+        <h3 class="m-top">How to read this</h3>
+        <ul class="list">
+          <li>Row 1: x[k]</li>
+          <li>Row 2: flipped & shifted h[n−k]</li>
+          <li>Row 3: product x[k]·h[n−k]</li>
+          <li>Row 4: ∑ product = y[n] at current n</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 nj • Convolution Sliding Visualization</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    function parseSequence(text) {
+      const map = new Map();
+      text
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length)
+        .forEach((pair) => {
+          const [nStr, vStr] = pair.split(":").map((s) => s.trim());
+          const n = parseInt(nStr, 10);
+          const v = parseFloat(vStr);
+          if (!isNaN(n) && !isNaN(v)) {
+            map.set(n, v);
+          }
+        });
+      return map;
+    }
+
+    let xMap = new Map();
+    let hMap = new Map();
+    let nMin = 0;
+    let nMax = 0;
+
+    const xInput = document.getElementById("xInput");
+    const hInput = document.getElementById("hInput");
+    const loadBtn = document.getElementById("loadBtn");
+    const nSlider = document.getElementById("nSlider");
+    const nValue = document.getElementById("nValue");
+    const visBox = document.getElementById("visBox");
+    const playBtn = document.getElementById("playBtn");
+
+    loadBtn.addEventListener("click", () => {
+      xMap = parseSequence(xInput.value);
+      hMap = parseSequence(hInput.value);
+
+      if (!xMap.size || !hMap.size) {
+        visBox.textContent = "Please enter valid x[k] and h[k].";
+        return;
+      }
+
+      const xIdx = Array.from(xMap.keys());
+      const hIdx = Array.from(hMap.keys());
+      const xMin = Math.min(...xIdx);
+      const xMax = Math.max(...xIdx);
+      const hMin = Math.min(...hIdx);
+      const hMax = Math.max(...hIdx);
+
+      nMin = xMin + hMin;
+      nMax = xMax + hMax;
+
+      nSlider.min = nMin;
+      nSlider.max = nMax;
+      nSlider.value = nMin;
+      nValue.textContent = nMin;
+
+      updateVisualization();
+    });
+
+    nSlider.addEventListener("input", () => {
+      nValue.textContent = nSlider.value;
+      updateVisualization();
+    });
+
+    function updateVisualization() {
+      if (!xMap.size || !hMap.size) {
+        visBox.textContent = "Load sequences first.";
+        return;
+      }
+
+      const n = parseInt(nSlider.value, 10);
+      const kIdx = new Set();
+      xMap.forEach((_, k) => kIdx.add(k));
+      hMap.forEach((_, k) => {
+        // for h[n-k], when k runs all integers, n-k = m => k = n-m
+        // we will just extend index to include shifts
+        kIdx.add(n - k);
+      });
+      const ks = Array.from(kIdx).sort((a, b) => a - b);
+
+      let line1 = "k   | x[k] ";
+      let line2 = "    | h[n-k]";
+      let line3 = "    | prod ";
+      let line4 = `    | y[${n}] = `;
+
+      let ySum = 0;
+      ks.forEach((k) => {
+        const xk = xMap.get(k) ?? 0;
+        const hIndex = n - k;
+        const hk = hMap.get(hIndex) ?? 0;
+        const prod = xk * hk;
+        ySum += prod;
+
+        const label = k.toString().padStart(2);
+        line1 += ` ${label}:${xk.toFixed(1).padStart(4)}`;
+        line2 += ` ${label}:${hk.toFixed(1).padStart(4)}`;
+        line3 += ` ${label}:${prod.toFixed(1).padStart(4)}`;
+      });
+
+      line4 += ySum.toFixed(3);
+
+      visBox.textContent = [line1, line2, line3, line4].join("\n");
+    }
+
+    let animId = null;
+    playBtn.addEventListener("click", () => {
+      if (!xMap.size || !hMap.size) {
+        visBox.textContent = "Load sequences first.";
+        return;
+      }
+
+      if (animId !== null) {
+        cancelAnimationFrame(animId);
+        animId = null;
+        playBtn.textContent = "Play animation";
+        return;
+      }
+
+      playBtn.textContent = "Stop animation";
+      let current = parseInt(nSlider.value, 10);
+
+      const step = () => {
+        if (current > nMax) {
+          current = nMin;
+        }
+        nSlider.value = current;
+        nValue.textContent = current;
+        updateVisualization();
+        current++;
+        animId = requestAnimationFrame(() => {
+          setTimeout(step, 600); // slow down for readability
+        });
+      };
+
+      step();
+    });
+  </script>
+</body>
+</html>
