@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Signals & Systems | Convolution Lab</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">SignalsLab<span>.Convolution</span></div>
+    <nav class="nav">
+      <a href="index.html" class="active">Home</a>
+      <a href="discrete.html">Discrete Convolution</a>
+      <a href="visual.html">Sliding Visualization</a>
+    </nav>
+    <button class="burger" id="burger">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <main class="main">
+    <section class="hero">
+      <h1>Convolution Lab – Signals & Systems</h1>
+      <p>
+        Small interactive tools to understand discrete‑time convolution: numeric computation, step‑by‑step sliding,
+        and signal visualization ideas you can extend.[web:228][web:229]
+      </p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>What is convolution?</h2>
+        <p>
+          For discrete‑time signals, convolution of x[n] and h[n] is defined as:
+        </p>
+        <p>\( y[n] = \sum_{k=-\infty}^{\infty} x[k] h[n - k] \)</p>
+        <ul class="list m-top">
+          <li>Describes output y[n] of an LTI system with impulse response h[n] and input x[n].</li>
+          <li>Graphical view: flip one signal in time, shift, multiply and sum over overlap.[web:228]</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Explore tools</h2>
+        <ul class="list">
+          <li><a class="btn secondary m-top" href="discrete.html">Discrete Convolution Helper</a></li>
+          <li><a class="btn secondary m-top" href="visual.html">Sliding/Overlap Visualization</a></li>
+        </ul>
+        <p class="small m-top">
+          You can add more pages later: continuous‑time convolution, Fourier series, filters, etc.
+        </p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 nj • Signals & Systems Convolution Lab</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
