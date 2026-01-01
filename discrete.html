@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discrete Convolution Helper</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">SignalsLab<span>.Convolution</span></div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="discrete.html" class="active">Discrete Convolution</a>
+      <a href="visual.html">Sliding Visualization</a>
+    </nav>
+    <button class="burger" id="burger">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <main class="main">
+    <section class="hero">
+      <h1>Discrete‑time Convolution Helper</h1>
+      <p>
+        Enter two finite‑length sequences x[n] and h[n] and see their convolution y[n] = x[n] * h[n]. This helps
+        you check manual calculations and understand the convolution sum.[web:228]
+      </p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Input sequences</h2>
+        <p class="small">
+          Format: n:value pairs separated by commas. Example for x[n]: -1:1, 0:2, 1:1
+        </p>
+        <label> x[n]
+          <textarea id="xInput" rows="3">-1:1, 0:2, 1:1</textarea>
+        </label>
+        <label> h[n]
+          <textarea id="hInput" rows="3">0:1, 1:1</textarea>
+        </label>
+        <button id="convBtn">Compute convolution</button>
+      </article>
+
+      <article class="card">
+        <h2>Results</h2>
+        <div id="convOutput" class="output-box"></div>
+
+        <h3 class="m-top">Concept reminder</h3>
+        <ul class="list">
+          <li>Definition: \( y[n] = \sum_k x[k] h[n - k] \).</li>
+          <li>Length: if x has length L and h has length M, y has length L + M − 1.[web:228]</li>
+          <li>For LTI systems: x[n] is input, h[n] is impulse response, y[n] is output.</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 nj • Discrete‑time Convolution Helper</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    function parseSequence(text) {
+      const map = new Map();
+      text
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length)
+        .forEach((pair) => {
+          const [nStr, vStr] = pair.split(":").map((s) => s.trim());
+          const n = parseInt(nStr, 10);
+          const v = parseFloat(vStr);
+          if (!isNaN(n) && !isNaN(v)) {
+            map.set(n, v);
+          }
+        });
+      return map;
+    }
+
+    function convolve(xMap, hMap) {
+      const nIndices = Array.from(xMap.keys());
+      const mIndices = Array.from(hMap.keys());
+      if (!nIndices.length || !mIndices.length) return new Map();
+
+      const nMin = Math.min(...nIndices);
+      const nMax = Math.max(...nIndices);
+      const mMin = Math.min(...mIndices);
+      const mMax = Math.max(...mIndices);
+
+      const yMap = new Map();
+
+      for (let n = nMin + mMin; n <= nMax + mMax; n++) {
+        let sum = 0;
+        for (let k = nMin; k <= nMax; k++) {
+          const xk = xMap.get(k) ?? 0;
+          const hIndex = n - k;
+          const hk = hMap.get(hIndex) ?? 0;
+          sum += xk * hk;
+        }
+        if (Math.abs(sum) > 1e-12) {
+          yMap.set(n, sum);
+        }
+      }
+      return yMap;
+    }
+
+    const xInput = document.getElementById("xInput");
+    const hInput = document.getElementById("hInput");
+    const convBtn = document.getElementById("convBtn");
+    const convOutput = document.getElementById("convOutput");
+
+    convBtn.addEventListener("click", () => {
+      const xMap = parseSequence(xInput.value);
+      const hMap = parseSequence(hInput.value);
+
+      if (!xMap.size || !hMap.size) {
+        convOutput.textContent = "Please enter valid x[n] and h[n] sequences.";
+        return;
+      }
+
+      const yMap = convolve(xMap, hMap);
+      if (!yMap.size) {
+        convOutput.textContent = "Convolution result is all zeros.";
+        return;
+      }
+
+      const sorted = Array.from(yMap.keys()).sort((a, b) => a - b);
+      let out = " n   |  y[n]\n";
+      out += "-----+--------\n";
+      sorted.forEach((n) => {
+        out += `${n.toString().padStart(3)} | ${yMap.get(n).toFixed(3).padStart(7)}\n`;
+      });
+
+      out += "\nSequence form: ";
+      out += sorted
+        .map((n) => `${n}:${yMap.get(n).toFixed(3)}`)
+        .join(", ");
+
+      convOutput.textContent = out;
+    });
+  </script>
+</body>
+</html>
